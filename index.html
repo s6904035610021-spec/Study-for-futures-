@@ -7,11 +7,35 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
+<style>
+/* ===== หน้าสรุปรายวิชา ===== */
+.sum-subjects{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.sum-subjects .chip{cursor:pointer}
+.sum-desc{margin:0 0 14px;opacity:.75}
+.sum-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.sum-item{border:0;padding:0;background:#fff;border-radius:16px;overflow:hidden;cursor:zoom-in;
+  box-shadow:0 2px 10px rgba(0,0,0,.08);font:inherit;text-align:left}
+.sum-item:focus-visible{outline:3px solid #6366f1;outline-offset:2px}
+.sum-item .thumb{aspect-ratio:4/3;background:#f3f4f6;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sum-item img{width:100%;height:100%;object-fit:cover;display:block}
+.sum-item .cap{padding:10px 14px;font-weight:500}
+.sum-item .miss{padding:16px;text-align:center;font-size:.9rem;opacity:.7}
+.lightbox{position:fixed;inset:0;background:rgba(15,15,30,.88);display:none;align-items:center;justify-content:center;
+  z-index:999;padding:20px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:100%;max-height:100%;border-radius:10px;background:#fff}
+.lightbox .lb-close{position:absolute;top:14px;right:14px;border:0;border-radius:999px;width:42px;height:42px;
+  font-size:1.2rem;cursor:pointer;background:#fff}
+.lightbox .lb-nav{position:absolute;top:50%;transform:translateY(-50%);border:0;border-radius:999px;width:44px;height:44px;
+  font-size:1.2rem;cursor:pointer;background:#fff}
+.lightbox .lb-prev{left:14px}.lightbox .lb-next{right:14px}
+</style>
 </head>
 <body>
 <aside class="nav" id="nav">
   <div class="logo">🎓 <span>EdTech Hub</span></div>
   <button class="tab active" data-page="flash"><i>🗂️</i><span>แฟลชการ์ด</span></button>
+  <button class="tab" data-page="summary"><i>📚</i><span>สรุปรายวิชา</span></button>
   <button class="tab" data-page="plan"><i>⏰</i><span>ตารางอ่านหนังสือ</span></button>
   <button class="tab" data-page="stress"><i>🌈</i><span>ความเครียด</span></button>
 </aside>
@@ -44,6 +68,17 @@
       <button class="btn indigo" id="addCard">＋ เพิ่มการ์ด</button>
       <button class="btn ghost" id="delCard">🗑️ ลบการ์ดที่แสดงอยู่</button>
     </div>
+  </div>
+</section>
+
+<!-- Summary by subject -->
+<section id="summary" class="page">
+  <h1>สรุปรายวิชา</h1>
+  <div class="sum-subjects" id="sumSubjects"></div>
+  <div class="card c-purple">
+    <h2 id="sumTitle"></h2>
+    <p class="sum-desc" id="sumDesc"></p>
+    <div class="sum-gallery" id="sumGallery"></div>
   </div>
 </section>
 
@@ -104,6 +139,119 @@
   </div>
 </section>
 </main>
+
+<!-- ดูรูปสรุปแบบเต็มจอ -->
+<div class="lightbox" id="lightbox" role="dialog" aria-label="ดูรูปสรุป">
+  <button class="lb-close" id="lbClose" aria-label="ปิด">✕</button>
+  <button class="lb-nav lb-prev" id="lbPrev" aria-label="รูปก่อนหน้า">◀</button>
+  <img id="lbImg" alt="">
+  <button class="lb-nav lb-next" id="lbNext" aria-label="รูปถัดไป">▶</button>
+</div>
+
 <script src="script.js"></script>
+<script>
+/* ===== หน้าสรุปรายวิชา =====
+   วางไฟล์รูปไว้โฟลเดอร์เดียวกับ index.html (หรือแก้ IMG_DIR เป็น "images/")
+   ระบบจะลองหานามสกุล .png .jpg .jpeg .webp ให้เอง */
+(function () {
+  var IMG_DIR = "";
+  var EXTS = ["png", "jpg", "jpeg", "webp"];
+  var SUBJECTS = [
+    { id: "engm", name: "Engineering Mathematics 1", emoji: "📐",
+      desc: "สรุปคณิตศาสตร์วิศวกรรม 1", images: ["ENGM1", "ENGM2", "ENGM3", "ENGM4"] },
+    { id: "phy", name: "Physics 1", emoji: "⚛️",
+      desc: "สรุปฟิสิกส์ 1", images: ["PHY1", "PHY2"] }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var current = SUBJECTS[0], shown = [], lbIndex = 0;
+
+  /* ให้แท็บนี้สลับหน้าได้แม้ script.js เดิมไม่ได้จัดการให้ */
+  var tab = document.querySelector('.tab[data-page="summary"]');
+  tab.addEventListener("click", function () {
+    document.querySelectorAll(".tab").forEach(function (t) { t.classList.toggle("active", t === tab); });
+    document.querySelectorAll(".page").forEach(function (p) { p.classList.toggle("active", p.id === "summary"); });
+  });
+
+  function loadImg(img, base, i) {
+    if (i >= EXTS.length) { img.onerror = null; img.dispatchEvent(new Event("notfound")); return; }
+    img.onerror = function () { loadImg(img, base, i + 1); };
+    img.src = IMG_DIR + base + "." + EXTS[i];
+  }
+
+  function renderSubjects() {
+    var box = $("sumSubjects");
+    box.innerHTML = "";
+    SUBJECTS.forEach(function (s) {
+      var b = document.createElement("button");
+      b.className = "chip" + (s === current ? " on" : "");
+      b.textContent = s.emoji + " " + s.name;
+      b.onclick = function () { current = s; renderSubjects(); renderGallery(); };
+      box.appendChild(b);
+    });
+  }
+
+  function renderGallery() {
+    $("sumTitle").textContent = current.emoji + " " + current.name;
+    $("sumDesc").textContent = current.desc + " · " + current.images.length + " รูป";
+    var g = $("sumGallery");
+    g.innerHTML = "";
+    shown = [];
+    current.images.forEach(function (base) {
+      var item = document.createElement("button");
+      item.className = "sum-item";
+      var thumb = document.createElement("div");
+      thumb.className = "thumb";
+      var img = document.createElement("img");
+      img.alt = "สรุป " + base;
+      img.loading = "lazy";
+      img.addEventListener("notfound", function () {
+        thumb.innerHTML = '<div class="miss">ไม่พบไฟล์ ' + base + '<br>(.png / .jpg / .jpeg / .webp)</div>';
+        item.style.cursor = "default";
+        item.onclick = null;
+      });
+      thumb.appendChild(img);
+      var cap = document.createElement("div");
+      cap.className = "cap";
+      cap.textContent = base;
+      item.appendChild(thumb);
+      item.appendChild(cap);
+      item.onclick = function () { if (img.src && img.complete && img.naturalWidth) openLb(shown.indexOf(img)); };
+      shown.push(img);
+      g.appendChild(item);
+      loadImg(img, base, 0);
+    });
+  }
+
+  function openLb(i) {
+    var ok = shown.filter(function (im) { return im.naturalWidth; });
+    if (!ok.length) return;
+    lbIndex = Math.max(0, ok.indexOf(shown[i]));
+    shown = ok;
+    showLb();
+    $("lightbox").classList.add("open");
+  }
+  function showLb() {
+    $("lbImg").src = shown[lbIndex].src;
+    $("lbImg").alt = shown[lbIndex].alt;
+  }
+  function stepLb(d) { lbIndex = (lbIndex + d + shown.length) % shown.length; showLb(); }
+  function closeLb() { $("lightbox").classList.remove("open"); renderGallery(); }
+
+  $("lbClose").onclick = closeLb;
+  $("lbPrev").onclick = function (e) { e.stopPropagation(); stepLb(-1); };
+  $("lbNext").onclick = function (e) { e.stopPropagation(); stepLb(1); };
+  $("lightbox").onclick = function (e) { if (e.target === $("lightbox")) closeLb(); };
+  document.addEventListener("keydown", function (e) {
+    if (!$("lightbox").classList.contains("open")) return;
+    if (e.key === "Escape") closeLb();
+    if (e.key === "ArrowLeft") stepLb(-1);
+    if (e.key === "ArrowRight") stepLb(1);
+  });
+
+  renderSubjects();
+  renderGallery();
+})();
+</script>
 </body>
 </html>
