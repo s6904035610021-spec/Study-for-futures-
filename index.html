@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdTech Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<aside class="nav" id="nav">
+  <div class="logo">🎓 <span>EdTech Hub</span></div>
+  <button class="tab active" data-page="flash"><i>🗂️</i><span>แฟลชการ์ด</span></button>
+  <button class="tab" data-page="plan"><i>⏰</i><span>ตารางอ่านหนังสือ</span></button>
+  <button class="tab" data-page="stress"><i>🌈</i><span>ความเครียด</span></button>
+</aside>
+
+<main>
+<!-- Flashcards -->
+<section id="flash" class="page active">
+  <h1>ระบบแฟลชการ์ด</h1>
+  <div class="grid two">
+    <div class="card c-blue">
+      <label>หมวดหมู่</label>
+      <select id="catSelect"></select>
+      <div class="scene" id="scene"><div class="flip" id="flip">
+        <div class="face front" id="qText">-</div>
+        <div class="face back" id="aText">-</div>
+      </div></div>
+      <p class="hint">แตะการ์ดเพื่อพลิก · <span id="counter">0/0</span></p>
+      <div class="row">
+        <button class="btn pink" id="forgot">❌ จำไม่ได้</button>
+        <button class="btn mint" id="known">✅ จำได้</button>
+      </div>
+      <div class="row"><button class="btn ghost" id="prev">◀ ก่อนหน้า</button><button class="btn ghost" id="next">ถัดไป ▶</button></div>
+      <p class="stat" id="fStat"></p>
+    </div>
+    <div class="card c-yellow">
+      <h2>เพิ่มการ์ดใหม่</h2>
+      <input id="newCat" placeholder="หมวดหมู่ (เช่น อังกฤษ)">
+      <input id="newQ" placeholder="คำถาม / คำศัพท์">
+      <input id="newA" placeholder="คำตอบ">
+      <button class="btn indigo" id="addCard">＋ เพิ่มการ์ด</button>
+      <button class="btn ghost" id="delCard">🗑️ ลบการ์ดที่แสดงอยู่</button>
+    </div>
+  </div>
+</section>
+
+<!-- Planner -->
+<section id="plan" class="page">
+  <h1>ตารางงาน & Pomodoro</h1>
+  <div class="grid two">
+    <div class="card c-purple">
+      <h2>⏱️ Pomodoro</h2>
+      <div class="modes">
+        <button class="chip on" data-min="25">อ่าน 25</button>
+        <button class="chip" data-min="5">พัก 5</button>
+        <button class="chip" data-min="15">พักยาว 15</button>
+      </div>
+      <div class="timer" id="timer">25:00</div>
+      <div class="row">
+        <button class="btn mint" id="start">▶ Start</button>
+        <button class="btn yellow" id="pause">⏸ Pause</button>
+        <button class="btn pink" id="reset">↺ Reset</button>
+      </div>
+    </div>
+    <div class="card c-mint">
+      <h2>📝 รายการงาน</h2>
+      <input id="tTitle" placeholder="วิชา / การบ้าน">
+      <div class="row">
+        <input type="date" id="tDate">
+        <select id="tPri"><option value="สูง">🔴 สำคัญมาก</option><option value="กลาง" selected>🟡 ปานกลาง</option><option value="ต่ำ">🟢 ไม่เร่ง</option></select>
+      </div>
+      <button class="btn indigo" id="addTask">＋ เพิ่มงาน</button>
+      <ul id="taskList"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- Stress -->
+<section id="stress" class="page">
+  <h1>ประเมินความเครียด</h1>
+  <div class="grid two">
+    <div class="card c-pink">
+      <h2>วันนี้รู้สึกอย่างไร?</h2>
+      <div class="emojis" id="emojis"></div>
+      <div class="tips" id="tips">เลือกระดับความเครียดเพื่อดูคำแนะนำ 💛</div>
+      <h3>ประวัติล่าสุด</h3>
+      <div class="history" id="history"></div>
+    </div>
+    <div class="card c-blue">
+      <h2>🧘 มุมผ่อนคลาย</h2>
+      <div class="breath" id="breath"><span id="breathTxt">พร้อมไหม?</span></div>
+      <div class="row">
+        <button class="btn indigo" id="breathBtn">เริ่มฝึกหายใจ</button>
+      </div>
+      <div class="row">
+        <button class="btn mint" data-snd="rain">🌧️ เสียงฝน</button>
+        <button class="btn yellow" data-snd="wave">🌊 เสียงคลื่น</button>
+        <button class="btn pink" id="stopSnd">⏹ หยุด</button>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
